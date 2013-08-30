@@ -1,0 +1,484 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+		<meta charset="utf-8">
+		<title>Ghosts!!!</title>
+		<script src="./js/lib/jquery-2.0.3.min.js"></script>
+  	<script src="./js/lib/plugins/jquery.hotkeys.js"></script>
+  	<script src="./js/lib/plugins/key_status.js"></script>
+  	<script src="./js/utils.js"></script>
+  	<script src="./js/lib/socket.io.js"></script>
+  	<script src="./js/sprite.js"></script>
+  	
+  	<style>
+	  	#canvas {
+	  		position: relative;
+	  		background: #fff;
+	  		width: 500px;
+	  		height: 400px;
+	  	}
+	  	#canvas canvas {
+	  		position: absolute;
+		  	top: 0; 
+		  	left: 0;
+	  	}
+  	</style>
+  </head>
+  <body>
+  	<div id="canvas"></div>
+  	<input type="text" id="x" placeholder="x" />
+  	<input type="text" id="y" placeholder="y" />
+  	<button onclick="send_message();">Send</button>
+  	
+  	<ul id="chat"></ul>
+  	
+    <script>
+		  $(document).ready(function(){
+			
+			var isPixelPainted = function (x, y) { 
+				ctx = canvas_background; 
+				// this must be a canvas! 
+				thresh = this.transparencyThreshold || 100; 
+				// Grab a single pixel at x, y: if the alpha channel is greater 
+				// than the threshold, were in business. idata acts like a byte 
+				// array with each pixel occupying 4 slots (R, G, B , A). 
+				idata = ctx.getImageData(x, y, 1, 1); 
+				return idata.data[3] > thresh;
+			}  
+			
+		  var socket = io.connect('http://192.168.8.157:8080');
+		  var ghost_id;
+			var colors = Array('#ff0000', '#00ff00', '#0000ff', '#f2f6f0', '#555999', '#441aaa');
+
+		  function printGhost(ghost, index) {
+		  	var li = document.createElement('li');
+				li.innerHTML = "Ghost " + index + ": " + ghost.x + ", " + ghost.y;
+				document.getElementById('chat').appendChild(li);
+		  }
+			
+			socket.on('id', function (data) {
+		    player.id = data;
+			});  
+			
+			socket.on('ghost_id', function (data) {
+	    	ghost_id = data.ghost_id;
+			});
+			
+			socket.on('ghosts_update', function (data) {
+				
+				if(other_players.length == 0){
+		    	data.forEach(function(e, index){
+			    	if(data.id != player.id) {
+				    	other_players[other_players.length] = {
+						  	color: "#ff0000",
+							  x: 200, 
+							  y: 200,
+							  width: 40,
+							  height: 40, 
+							  sprite: Sprite("player-" + (index+2)), 
+							  draw: function() {
+							  	this.sprite.draw(canvas, this.x, this.y);
+							    //canvas_background.fillStyle = this.color;
+							    //canvas_background.fillRect(this.x, this.y, this.width, this.height);
+							  }	
+							}
+						}
+		    	});
+		    	console.log(other_players);		
+				}
+	    	data.forEach(function(ghost, index){
+	    		if(ghost.id != player.id) {
+			      console.log(ghost.id);
+			      other_players[index].x = ghost.x;
+						other_players[index].y = ghost.y;
+					}
+	      });
+
+	    	/*
+	    	for(i=0; i<other_players.length; i++){
+		    	other_players[i].x = ghost.x;
+					other_players[i].y = ghost.y;
+				}
+				*/
+	      // Log to browser console
+	      //console.log(data);
+	      // Add the message to the ul list
+	      /*
+	      data.forEach(function(ghost){
+		      console.log(ghost);
+	      });
+	      */
+	      //console.log("------------");
+	      document.getElementById('chat').innerHTML = '';
+	      data.forEach(printGhost);
+	    });
+	    
+		  // Called when client is connected to server
+		  socket.on('connect', function () {
+
+		  	// get player id
+			  socket.emit('get_id', null);
+			  socket.emit('ghosts_update', null);
+				
+				    	
+			    // Called when client receives message from server
+		  });
+  
+			
+    	var CANVAS_WIDTH = 500;
+			var CANVAS_HEIGHT = 400;			
+			
+			$("#canvas").append("<canvas class=\"background\" width='" + CANVAS_WIDTH + "' height='" + CANVAS_HEIGHT + "'></canvas>");
+			$("#canvas").append("<canvas class=\"main\" width='" + CANVAS_WIDTH + "' height='" + CANVAS_HEIGHT + "'></canvas>");
+			$("#canvas").append("<canvas class=\"debug\" width='" + CANVAS_WIDTH + "' height='" + CANVAS_HEIGHT + "'></canvas>");
+			
+			var canvas_background = $('#canvas canvas.background').get(0).getContext("2d");
+			var canvas = $('#canvas canvas.main').get(0).getContext("2d");
+			var canvas_debug = $('#canvas canvas.debug').get(0).getContext("2d");
+			
+			var FPS = 30;
+			
+			/*
+			$(document).bind("keydown", function() {
+				if (keydown.left) {
+				  player.due = "left";
+				}
+				
+				if (keydown.right) {
+				  player.due = "right";
+				}
+				
+				if (keydown.up) {
+				  player.due = "up";
+				}
+				
+				if (keydown.down) {
+					player.due = "down";
+				}
+			});*/
+			
+			/*
+			$(document).bind("keyup", function() {
+				if (keydown.left) {
+				  player.direction = "left";
+				}
+				
+				if (keydown.right) {
+				  player.direction = "right";
+				}
+				
+				if (keydown.up) {
+				  player.direction = "up";
+				}
+				
+				if (keydown.down) {
+					player.direction = "down";
+				}
+			});
+			*/
+			
+			window.requestAnimFrame = (function(){
+			  return  window.requestAnimationFrame       ||
+			          window.webkitRequestAnimationFrame ||
+			          window.mozRequestAnimationFrame    ||
+			          function( callback ){
+			            window.setTimeout(callback, 1000 / 30);
+			          };
+			})();
+			
+			
+			
+			/*
+			setInterval(function() {
+			  
+			  draw();
+			  update();
+			}, 1000/FPS);
+			*/
+			/*
+			function collides(a, b) {
+			  return a.x < b.x + b.width &&
+			         a.x + a.width > b.x &&
+			         a.y < b.y + b.height &&
+			         a.y + a.height > b.y;
+			}
+			*/
+			
+			function mapCollision() {
+				var pos = { "x": player.x, "y": player.y };
+				
+				switch(player.direction) {
+					case "left":
+						pos.x = player.x -= player.movement;
+						break;
+					case "right":
+						pos.x = player.x += player.movement;
+						break;
+					case "up":
+						pos.y = player.y -= player.movement;
+						break;
+					case "down":
+						pos.y = player.y += player.movement;
+						break;
+				}
+				
+				if(isPixelPainted(player.x, player.y) || isPixelPainted(player.x + player.width-1, player.y) || isPixelPainted(player.x, player.y + player.height-1) || isPixelPainted(player.x + player.width-1, player.y + player.height-1)) {
+					console.log('hit');
+					switch(player.direction) {
+						case "left":
+							player.x = player.x + player.movement;
+							break;
+						case "right":
+							player.x = player.x - player.movement;
+							break;
+						case "up":
+							player.y = player.y + player.movement;
+							break;
+						case "down":
+							player.y = player.y - player.movement;
+							break;
+					}
+					while(isPixelPainted(player.x, player.y) || isPixelPainted(player.x + player.width-1, player.y) || isPixelPainted(player.x, player.y + player.height-1) || isPixelPainted(player.x + player.width-1, player.y + player.height-1)) {
+						player.y = player.y -=1;
+					}
+					player.direction = null;
+				}
+			}
+			
+			function render(){
+				draw();
+			  update();
+			}
+			
+			function update() {
+				if (keydown.left) {
+					player.direction = "left";
+				}
+				
+				if (keydown.right) {
+					player.direction = "right";
+				}
+				
+				if (keydown.up) {
+					player.direction = "up";
+				}
+				
+				if (keydown.down) {
+					player.direction = "down";
+				}
+				if(player.direction != null) {
+					mapCollision();
+				}
+				
+				/*
+				if (keydown.left) {
+				  
+				  //player.x -= player.movement;
+				  if(mapCollision("left")){
+					  //player.x += player.movement;
+				  }
+				}
+				
+				if (keydown.right) {
+				  player.direction = "right";
+				  player.x += player.movement;
+				  if(mapCollision()){
+				  	player.x -= player.movement;
+				  }
+				}
+				
+				if (keydown.up) {
+				  player.direction = "up";
+				  player.y -= player.movement;
+				  if(mapCollision()){
+				  	player.y += player.movement;
+				  }
+				}
+				
+				if (keydown.down) {
+				  player.direction = "down";
+				  player.y += player.movement;
+				  if(mapCollision()){
+					  player.y -= player.movement;
+				  }
+				}
+			  */
+		    //player.x = player.x.clamp(0, CANVAS_WIDTH - player.width);
+	      //player.y = player.y.clamp(0, CANVAS_HEIGHT - player.height);
+				
+				if(player.x !== player.px || player.y !== player.py) {
+					socket.emit('ghost_update', { ghost_id: 1, x: player.x, y: player.y });
+					player.px = player.x;
+					player.py = player.y;
+				}
+			}
+			
+			function draw() {
+		    canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+				for(i=0;i<other_players.length;i++) {
+					other_players[i].draw();
+				}
+				//update player
+				player.draw();
+			}
+			
+			//draw map
+			
+			var other_players = [];
+			
+			var player = {
+			  id: null, 
+			  color: "#00A",
+			  x: 200, 
+			  y: 200,
+			  px: 200, 
+			  py: 200,
+			  width: 40,
+			  height: 40, 
+			  movement: 5, 
+			  direction: null, 
+			  due: null, 
+			  sprite: Sprite("player-1"), 
+			  //position: null, 
+			  collisionDetected: false, 
+			  draw: function() {
+				  this.sprite.draw(canvas, this.x, this.y);
+					//canvas.fillStyle = this.color;
+				  //canvas.fillRect(this.x, this.y, this.width, this.height);
+			  }
+			};
+			
+			var map = [
+				section = {
+					color: "#5c57fb",
+					draw: function() {
+						canvas_background.fillStyle = this.color;
+						canvas_background.beginPath();
+						canvas_background.moveTo(0, 0);
+						canvas_background.lineTo(0, 400);
+						canvas_background.lineTo(500, 400);
+						canvas_background.lineTo(500, 0);
+						canvas_background.lineTo(20, 0);
+						canvas_background.lineTo(20, 20);
+						canvas_background.lineTo(480, 20);
+						canvas_background.lineTo(480, 380);
+						canvas_background.lineTo(20, 380);
+						canvas_background.lineTo(20, 0);
+						canvas_background.fillStyle = this.color;
+						canvas_background.fill();
+						canvas_background.closePath();
+						
+					}
+				}, 
+				section = {
+					color: "#5c57fb",
+					draw: function() {
+						canvas_background.fillStyle = this.color;
+						canvas_background.beginPath();
+						canvas_background.moveTo(220, 110);
+						canvas_background.lineTo(140, 110);
+						canvas_background.lineTo(140, 290);
+						canvas_background.lineTo(360, 290);
+						canvas_background.lineTo(360, 110);
+						canvas_background.lineTo(280, 110);
+						canvas_background.lineTo(280, 130);
+						canvas_background.lineTo(340, 130);
+						canvas_background.lineTo(340, 270);
+						canvas_background.lineTo(160, 270);
+						canvas_background.lineTo(160, 130);
+						canvas_background.lineTo(220, 130);
+						canvas_background.fillStyle = this.color;
+						canvas_background.fill();
+						canvas_background.closePath();
+					}
+				}
+			]
+				
+				for(i=0;i<map.length;i++) {
+					map[i].draw();
+				}
+				
+				(function animloop(){
+				  requestAnimFrame(animloop);
+				  render();
+				})();
+				
+			 
+				/*
+				section = {
+					color: "#5c57fb",
+					draw: function() {
+						canvas.fillStyle = this.color;
+						canvas.fillRect(0, 0, 500, 400);
+					}
+				}, 
+				section = {
+					color: "#FFF",
+					draw: function() {
+						canvas.fillStyle = this.color;
+						canvas.fillRect(20, 20, 460, 360);
+					}
+				}
+				section = {
+					color: "#5c57fb",
+					draw: function() {
+						canvas.beginPath();
+						canvas.moveTo(0, 0);
+						canvas.lineTo(500, 0);
+						canvas.lineTo(500, 400);
+						canvas.lineTo(0, 400);
+						canvas.lineTo(0, 0);
+						canvas.lineTo(580, 20);
+						canvas.lineTo(20, 20);
+						canvas.lineTo(20, 250);
+						canvas.fillStyle = this.color;
+						canvas.fill();
+						canvas.closePath();
+
+					}
+				}
+				*/
+				/*
+				section = {
+					color: "#5c57fb",
+					position: { "x": 0, "y": 100 },
+					width: 600,
+					height: 20,
+					draw: function() {
+						canvas.beginPath();
+						canvas.moveTo(0, 250);
+						canvas.lineTo(0, 0);
+						canvas.lineTo(600, 0);
+						canvas.lineTo(600, 250);
+						canvas.lineTo(580, 250);
+						canvas.lineTo(580, 20);
+						canvas.lineTo(20, 20);
+						canvas.lineTo(20, 250);
+						canvas.fillStyle = this.color;
+						canvas.fill();
+						canvas.closePath();
+					}
+				}, 
+				section = {
+					color: "#5c57fb",
+					draw: function() {
+						canvas.beginPath();
+						canvas.moveTo(0, 350);
+						canvas.lineTo(0, 600);
+						canvas.lineTo(600, 600);
+						canvas.lineTo(600, 350);
+						canvas.lineTo(580, 350);
+						canvas.lineTo(580, 580);
+						canvas.lineTo(20, 580);
+						canvas.lineTo(20, 350);
+						canvas.fillStyle = this.color;
+						canvas.fill();
+						canvas.closePath();
+					}
+				}
+				*/
+				
+				});
+    </script>
+  </body>
+</html>
