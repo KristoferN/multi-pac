@@ -46,9 +46,9 @@
 				return idata.data[3] > thresh;
 			}  
 			
-		  var socket = io.connect('http://192.168.8.157:8080');
+		  var socket = io.connect('http://192.168.8.122:8080');
 		  var ghost_id;
-			var colors = Array('#ff0000', '#00ff00', '#0000ff', '#f2f6f0', '#555999', '#441aaa');
+		  var colors = Array("red", "purple", "blue", "black");
 
 		  function printGhost(ghost, index) {
 		  	var li = document.createElement('li');
@@ -65,66 +65,42 @@
 			});
 			
 			socket.on('ghosts_update', function (data) {
-				
-				if(other_players.length == 0){
-		    	data.forEach(function(e, index){
-			    	if(data.id != player.id) {
-				    	other_players[other_players.length] = {
-						  	color: "#ff0000",
-							  x: 200, 
-							  y: 200,
-							  width: 40,
-							  height: 40, 
-							  sprite: Sprite("player-" + (index+2)), 
-							  draw: function() {
-							  	this.sprite.draw(canvas, this.x, this.y);
-							    //canvas_background.fillStyle = this.color;
-							    //canvas_background.fillRect(this.x, this.y, this.width, this.height);
-							  }	
-							}
-						}
-		    	});
-		    	console.log(other_players);		
-				}
+			
 	    	data.forEach(function(ghost, index){
-	    		if(ghost.id != player.id) {
-			      console.log(ghost.id);
-			      other_players[index].x = ghost.x;
-						other_players[index].y = ghost.y;
-					}
+		    		if(other_players.length == 3) {
+		    			return false;
+		    		}
+			    	other_players[index] = {
+						  width: 40,
+						  height: 40, 
+						  x: 200, 
+						  y: 200, 
+						  id: ghost.id, 
+						  sprite: Sprite("player-" + colors[(index+1)]), 
+						  draw: function() {
+						  	this.sprite.draw(canvas, this.x, this.y);
+						  }	
+						}
+	    	});
+	    
+	    	data.forEach(function(ghost, index){
+	    			if(ghost.x != null && ghost.y != null) {
+				      other_players[index].x = ghost.x;
+							other_players[index].y = ghost.y;
+						}
 	      });
-
-	    	/*
-	    	for(i=0; i<other_players.length; i++){
-		    	other_players[i].x = ghost.x;
-					other_players[i].y = ghost.y;
-				}
-				*/
-	      // Log to browser console
-	      //console.log(data);
-	      // Add the message to the ul list
-	      /*
-	      data.forEach(function(ghost){
-		      console.log(ghost);
-	      });
-	      */
-	      //console.log("------------");
 	      document.getElementById('chat').innerHTML = '';
 	      data.forEach(printGhost);
+	      //console.log(other_players);
 	    });
 	    
 		  // Called when client is connected to server
 		  socket.on('connect', function () {
-
-		  	// get player id
+		  	// get local player id
 			  socket.emit('get_id', null);
 			  socket.emit('ghosts_update', null);
-				
-				    	
-			    // Called when client receives message from server
 		  });
-  
-			
+
     	var CANVAS_WIDTH = 500;
 			var CANVAS_HEIGHT = 400;			
 			
@@ -138,45 +114,6 @@
 			
 			var FPS = 30;
 			
-			/*
-			$(document).bind("keydown", function() {
-				if (keydown.left) {
-				  player.due = "left";
-				}
-				
-				if (keydown.right) {
-				  player.due = "right";
-				}
-				
-				if (keydown.up) {
-				  player.due = "up";
-				}
-				
-				if (keydown.down) {
-					player.due = "down";
-				}
-			});*/
-			
-			/*
-			$(document).bind("keyup", function() {
-				if (keydown.left) {
-				  player.direction = "left";
-				}
-				
-				if (keydown.right) {
-				  player.direction = "right";
-				}
-				
-				if (keydown.up) {
-				  player.direction = "up";
-				}
-				
-				if (keydown.down) {
-					player.direction = "down";
-				}
-			});
-			*/
-			
 			window.requestAnimFrame = (function(){
 			  return  window.requestAnimationFrame       ||
 			          window.webkitRequestAnimationFrame ||
@@ -185,24 +122,6 @@
 			            window.setTimeout(callback, 1000 / 30);
 			          };
 			})();
-			
-			
-			
-			/*
-			setInterval(function() {
-			  
-			  draw();
-			  update();
-			}, 1000/FPS);
-			*/
-			/*
-			function collides(a, b) {
-			  return a.x < b.x + b.width &&
-			         a.x + a.width > b.x &&
-			         a.y < b.y + b.height &&
-			         a.y + a.height > b.y;
-			}
-			*/
 			
 			function mapCollision() {
 				var pos = { "x": player.x, "y": player.y };
@@ -223,7 +142,7 @@
 				}
 				
 				if(isPixelPainted(player.x, player.y) || isPixelPainted(player.x + player.width-1, player.y) || isPixelPainted(player.x, player.y + player.height-1) || isPixelPainted(player.x + player.width-1, player.y + player.height-1)) {
-					console.log('hit');
+					//console.log('hit');
 					switch(player.direction) {
 						case "left":
 							player.x = player.x + player.movement;
@@ -238,9 +157,11 @@
 							player.y = player.y - player.movement;
 							break;
 					}
+					/*
 					while(isPixelPainted(player.x, player.y) || isPixelPainted(player.x + player.width-1, player.y) || isPixelPainted(player.x, player.y + player.height-1) || isPixelPainted(player.x + player.width-1, player.y + player.height-1)) {
 						player.y = player.y -=1;
 					}
+					*/
 					player.direction = null;
 				}
 			}
@@ -270,42 +191,6 @@
 					mapCollision();
 				}
 				
-				/*
-				if (keydown.left) {
-				  
-				  //player.x -= player.movement;
-				  if(mapCollision("left")){
-					  //player.x += player.movement;
-				  }
-				}
-				
-				if (keydown.right) {
-				  player.direction = "right";
-				  player.x += player.movement;
-				  if(mapCollision()){
-				  	player.x -= player.movement;
-				  }
-				}
-				
-				if (keydown.up) {
-				  player.direction = "up";
-				  player.y -= player.movement;
-				  if(mapCollision()){
-				  	player.y += player.movement;
-				  }
-				}
-				
-				if (keydown.down) {
-				  player.direction = "down";
-				  player.y += player.movement;
-				  if(mapCollision()){
-					  player.y -= player.movement;
-				  }
-				}
-			  */
-		    //player.x = player.x.clamp(0, CANVAS_WIDTH - player.width);
-	      //player.y = player.y.clamp(0, CANVAS_HEIGHT - player.height);
-				
 				if(player.x !== player.px || player.y !== player.py) {
 					socket.emit('ghost_update', { ghost_id: 1, x: player.x, y: player.y });
 					player.px = player.x;
@@ -315,8 +200,14 @@
 			
 			function draw() {
 		    canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+				// update remote players
+				//console.log(other_players);
 				for(i=0;i<other_players.length;i++) {
-					other_players[i].draw();
+					//console.log(other_players[i]);
+					//console.log(other_players[i].id == player.id);
+					if(other_players[i].id != player.id) {
+						other_players[i].draw();
+					}
 				}
 				//update player
 				player.draw();
@@ -338,7 +229,7 @@
 			  movement: 5, 
 			  direction: null, 
 			  due: null, 
-			  sprite: Sprite("player-1"), 
+			  sprite: Sprite("player-"+colors[0]), 
 			  //position: null, 
 			  collisionDetected: false, 
 			  draw: function() {
