@@ -14,8 +14,8 @@
 	  	#canvas {
 	  		position: relative;
 	  		background: #fff;
-	  		width: 500px;
-	  		height: 400px;
+	  		width: 800px;
+	  		height: 800px;
 	  	}
 	  	#canvas canvas {
 	  		position: absolute;
@@ -101,8 +101,8 @@
 			  socket.emit('ghosts_update', null);
 		  });
 
-    	var CANVAS_WIDTH = 500;
-			var CANVAS_HEIGHT = 400;			
+    	var CANVAS_WIDTH = 800;
+			var CANVAS_HEIGHT = 800;			
 			
 			$("#canvas").append("<canvas class=\"background\" width='" + CANVAS_WIDTH + "' height='" + CANVAS_HEIGHT + "'></canvas>");
 			$("#canvas").append("<canvas class=\"main\" width='" + CANVAS_WIDTH + "' height='" + CANVAS_HEIGHT + "'></canvas>");
@@ -113,6 +113,38 @@
 			var canvas_debug = $('#canvas canvas.debug').get(0).getContext("2d");
 			
 			var FPS = 30;
+			
+			var level = Array(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,1,1,1,1,0,1,1,1,1,1,0,0,0,0,0,0,1,
+												1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,
+												1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,
+												1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,
+												1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+												1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1);
+			
+			level.forEach(function(block, index){
+				canvas_background.fillStyle = "#446ba0";
+				var row = Math.floor(index/20);
+				var col = index%20;
+				//console.log((Math.floor(index/20) ) + (index% 25));
+				//console.log((Math.floor(index/20) ) + (index * 25));
+				if(block == 1) {
+					canvas_background.fillRect(col*40, row*40, 40, 40);	
+				}
+			});
 			
 			window.requestAnimFrame = (function(){
 			  return  window.requestAnimationFrame       ||
@@ -220,8 +252,8 @@
 			var player = {
 			  id: null, 
 			  color: "#00A",
-			  x: 200, 
-			  y: 200,
+			  x: 400, 
+			  y: 400,
 			  px: 200, 
 			  py: 200,
 			  width: 40,
@@ -239,6 +271,7 @@
 			  }
 			};
 			
+			/*
 			var map = [
 				section = {
 					color: "#5c57fb",
@@ -288,7 +321,7 @@
 				for(i=0;i<map.length;i++) {
 					map[i].draw();
 				}
-				
+				*/
 				(function animloop(){
 				  requestAnimFrame(animloop);
 				  render();
